@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Notifa"
+rootProject.name = "NotifAi"
 include(":app")
