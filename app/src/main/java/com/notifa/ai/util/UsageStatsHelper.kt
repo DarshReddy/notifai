@@ -1,5 +1,6 @@
 package com.notifa.ai.util
 
+import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.pm.PackageManager
@@ -7,7 +8,6 @@ import android.os.Build
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.Calendar
-import java.util.TimeZone
 
 data class AppUsageData(
     val appName: String,
@@ -17,8 +17,6 @@ data class AppUsageData(
 )
 
 object UsageStatsHelper {
-
-    private const val MILLIS_PER_DAY = 24L * 60 * 60 * 1000
 
     private fun dayStartMillis(): Long {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -32,10 +30,12 @@ object UsageStatsHelper {
     }
 
     private fun legacyDayStart(): Long {
-        val now = System.currentTimeMillis()
-        val tz = TimeZone.getDefault()
-        val offset = tz.getOffset(now)
-        return now - ((now + offset) % MILLIS_PER_DAY)
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        return calendar.timeInMillis
     }
 
     fun hasUsageStatsPermission(context: Context): Boolean {
@@ -65,7 +65,7 @@ object UsageStatsHelper {
             val notifCount = notificationCounts[packageName] ?: 0
             if (notifCount <= 0) return@forEach
             try {
-                val appInfo = packageManager.getApplicationInfo(packageName, 0)
+                val appInfo = packageManager.getApplicationInfo(packageName, PackageManager.GET_META_DATA)
                 val appName = packageManager.getApplicationLabel(appInfo).toString()
                 appDataList.add(
                     AppUsageData(
@@ -86,27 +86,64 @@ object UsageStatsHelper {
         val start = dayStartMillis()
         val end = System.currentTimeMillis()
         val events = usageStatsManager.queryEvents(start, end)
-        var totalScreenTime = 0L
-        val eventLog = mutableListOf<UsageEvents.Event>()
+
+        val screenEvents = mutableListOf<UsageEvents.Event>()
         while (events.hasNextEvent()) {
-            val event = UsageEvents.Event()
-            events.getNextEvent(event)
-            if (event.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND || event.eventType == UsageEvents.Event.MOVE_TO_BACKGROUND) {
-                eventLog.add(event)
+            val currentEvent = UsageEvents.Event()
+            events.getNextEvent(currentEvent)
+            if (currentEvent.eventType == UsageEvents.Event.SCREEN_INTERACTIVE ||
+                currentEvent.eventType == UsageEvents.Event.KEYGUARD_HIDDEN ||
+                currentEvent.eventType == UsageEvents.Event.SCREEN_NON_INTERACTIVE) {
+                screenEvents.add(currentEvent)
             }
         }
 
-        for (i in 0 until eventLog.size - 1) {
-            val currentEvent = eventLog[i]
-            val nextEvent = eventLog[i + 1]
-            if (currentEvent.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND &&
-                (nextEvent.eventType == UsageEvents.Event.MOVE_TO_BACKGROUND || nextEvent.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND)
-            ) {
-                val timeDiff = nextEvent.timeStamp - currentEvent.timeStamp
-                totalScreenTime += timeDiff
+        if (screenEvents.isEmpty()) {
+            return 0L
+        }
+
+        val sessions = mutableListOf<Pair<Long, Long>>()
+        var sessionStart: Long? = null
+
+        screenEvents.sortBy { it.timeStamp }
+
+        screenEvents.forEach { event ->
+            if (event.eventType == UsageEvents.Event.SCREEN_INTERACTIVE || event.eventType == UsageEvents.Event.KEYGUARD_HIDDEN) {
+                if (sessionStart == null) {
+                    sessionStart = event.timeStamp
+                }
+            } else if (event.eventType == UsageEvents.Event.SCREEN_NON_INTERACTIVE) {
+                if (sessionStart != null) {
+                    sessions.add(Pair(sessionStart, event.timeStamp))
+                    sessionStart = null
+                }
             }
         }
-        return totalScreenTime
+
+        sessionStart?.let {
+            sessions.add(Pair(it, end))
+        }
+
+        if (sessions.isEmpty()) return 0L
+
+        // Merge overlapping intervals
+        val mergedSessions = mutableListOf<Pair<Long, Long>>()
+        sessions.sortBy { it.first }
+        var (currentStart, currentEnd) = sessions.first()
+
+        for (i in 1 until sessions.size) {
+            val (nextStart, nextEnd) = sessions[i]
+            if (nextStart < currentEnd) {
+                currentEnd = maxOf(currentEnd, nextEnd)
+            } else {
+                mergedSessions.add(Pair(currentStart, currentEnd))
+                currentStart = nextStart
+                currentEnd = nextEnd
+            }
+        }
+        mergedSessions.add(Pair(currentStart, currentEnd))
+
+        return mergedSessions.sumOf { it.second - it.first }
     }
 
     fun formatMillisToTime(millis: Long): String {
