@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.Card
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -66,8 +65,7 @@ fun SettingsScreen(
     ) { padding ->
         LazyColumn(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+                .fillMaxSize(),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -106,10 +104,6 @@ fun SettingsScreen(
             }
 
             item {
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
-            }
-
-            item {
                 Text(
                     "Batch Settings",
                     fontSize = 14.sp,
@@ -138,10 +132,6 @@ fun SettingsScreen(
             }
 
             item {
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
-            }
-
-            item {
                 Text(
                     "AI & Privacy",
                     fontSize = 14.sp,
@@ -167,10 +157,6 @@ fun SettingsScreen(
                     icon = Icons.Default.ThumbUp,
                     onClick = onNavigateFeedback
                 )
-            }
-
-            item {
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
             }
 
             item {

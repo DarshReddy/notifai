@@ -67,8 +67,7 @@ fun InsightsScreen(viewModel: InsightsViewModel) {
         if (insightsData == null) {
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
+                    .fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator()
@@ -78,8 +77,7 @@ fun InsightsScreen(viewModel: InsightsViewModel) {
 
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
+                    .fillMaxSize(),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {

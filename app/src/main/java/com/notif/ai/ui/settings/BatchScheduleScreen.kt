@@ -57,7 +57,7 @@ fun BatchScheduleScreen(onBack: () -> Unit, viewModel: BatchScheduleViewModel) {
         },
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                val existing = schedules?.value?.map { it.timeInMinutes }?.toSet()
+                val existing = schedules.value?.map { it.timeInMinutes }?.toSet()
                 val maxTime = 23 * 60 + 59 // 23:59 is the absolute max
 
                 // Start from last slot + 2 hours, or default to 9:00
