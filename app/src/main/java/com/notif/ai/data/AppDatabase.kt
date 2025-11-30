@@ -11,7 +11,7 @@ import androidx.room.RoomDatabase
         AppPreference::class,
         BatchSchedule::class
     ],
-    version = 2,
+    version = 4, // Incremented version number
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

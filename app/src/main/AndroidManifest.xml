@@ -15,12 +15,11 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Notifa">
+        android:theme="@style/Theme.NotifAi">
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.Notifa">
+            android:theme="@style/Theme.NotifAi">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -36,6 +35,14 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+        <receiver
+            android:name=".util.NotificationBroadcastReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.notif.ai.CATEGORY_CLICK" />
+            </intent-filter>
+        </receiver>
     </application>
 
     <queries>

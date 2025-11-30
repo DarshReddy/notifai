@@ -35,4 +35,10 @@ interface NotificationDao {
 
     @Query("SELECT COUNT(*) FROM notifications WHERE priority = :priority")
     fun countByPriority(priority: String): Flow<Int>
+
+    @Query("SELECT * FROM notifications WHERE category = :category ORDER BY timestamp DESC")
+    suspend fun getAllBatchedNotifications(category: NotificationCategory = NotificationCategory.BATCHED): List<NotificationEntity>
+
+    @Query("UPDATE notifications SET isSummarized = 1 WHERE id IN (:ids)")
+    suspend fun markAsSummarized(ids: List<Int>)
 }

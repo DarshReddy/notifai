@@ -6,8 +6,8 @@ import com.notif.ai.ai.GeminiService
 import com.notif.ai.data.AppDatabase
 import com.notif.ai.data.AppPreferenceRepository
 import com.notif.ai.data.NotificationCategory
+import com.notif.ai.data.NotificationDao
 import com.notif.ai.data.NotificationEntity
-import com.notif.ai.data.NotificationRepository
 import com.notif.ai.util.NotificationHelper
 import com.notif.ai.util.Priority
 import kotlinx.coroutines.CoroutineScope
@@ -20,13 +20,13 @@ class NotifListenerService : NotificationListenerService() {
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
 
-    private lateinit var repository: NotificationRepository
+    private lateinit var notificationDao: NotificationDao
     private lateinit var appPrefRepo: AppPreferenceRepository
 
     override fun onCreate() {
         super.onCreate()
         val db = AppDatabase.getDatabase(applicationContext)
-        repository = NotificationRepository(db.notificationDao())
+        notificationDao = db.notificationDao()
         appPrefRepo = AppPreferenceRepository(db.appPreferenceDao())
     }
 
@@ -45,56 +45,93 @@ class NotifListenerService : NotificationListenerService() {
             val text = notification.extras.getString("android.text", "")
             val timestamp = sbn.postTime
 
-            if (title.isEmpty() && text.isEmpty()) return
+            if (title.isNullOrEmpty() && text.isNullOrEmpty()) return
 
-            // Simple classification rules
             scope.launch {
-                val priorityString = GeminiService.categorizePriority(title, text, packageName)
+                val priorityString =
+                    GeminiService.categorizePriority(title ?: "", text ?: "", packageName)
 
                 val priority = when (priorityString) {
                     "My Priority" -> Priority.MY_PRIORITY
+                    "Important" -> Priority.IMPORTANT
                     "Promotional" -> Priority.PROMOTIONAL
                     "Spam" -> Priority.SPAM
-                    else -> return@launch
+                    else -> Priority.IMPORTANT
                 }
 
                 val pref = appPrefRepo.get(packageName)
                 val category = pref?.category ?: when {
+                    priority == Priority.MY_PRIORITY -> NotificationCategory.INSTANT
                     packageName.contains("dialer") || packageName.contains("phone") -> NotificationCategory.INSTANT
                     packageName.contains("alarm") || packageName.contains("calendar") -> NotificationCategory.INSTANT
                     else -> NotificationCategory.BATCHED
                 }
+
                 val notificationEntity = NotificationEntity(
                     packageName = packageName,
-                    title = title,
-                    text = text,
+                    title = title ?: "",
+                    text = text ?: "",
                     timestamp = timestamp,
                     priority = priority,
                     category = category,
                     isRead = false,
                     isSummarized = false
                 )
-                repository.insert(notificationEntity)
-                if (category == NotificationCategory.BATCHED) cancelNotification(sbn.key)
-                // Make sure we set ongoing (sticky) when we post the summary
-                val total = repository.countAll()
-                if (total > 0) {
-                    val batchedCount = repository.countByCategory(NotificationCategory.BATCHED)
-                    val instantCount = repository.countByCategory(NotificationCategory.INSTANT)
-                    val next = "2h"
-                    val summaryLine =
-                        if (batchedCount >= 3) "$batchedCount batched notifications" else null
-                    NotificationHelper.updateSummaryNotification(
-                        applicationContext,
-                        total,
-                        batchedCount,
-                        instantCount,
-                        next,
-                        summaryLine
-                    )
+
+                notificationDao.insert(notificationEntity)
+
+                if (category == NotificationCategory.BATCHED) {
+                    cancelNotification(sbn.key)
+                    updateBatchSummary()
+                } else {
+                    // For instant notifications, we might not want to re-summarize immediately
+                    // unless we want the count to be correct in the sticky notification.
+                    // But usually the sticky notification is for the "Summary" (Batch).
+                    // However, updateBatchSummary also updates the total counts.
+                    updateBatchSummary()
                 }
             }
         }
+    }
+
+    private suspend fun updateBatchSummary() {
+        // Fetch all active batched notifications
+        val notifications = notificationDao.getAllBatchedNotifications()
+
+        if (notifications.isEmpty()) {
+            NotificationHelper.cancelSummaryNotification(applicationContext)
+            return
+        }
+
+        // Group by Priority for UI
+        val categorizedNotifications = notifications.groupBy {
+            when (it.priority) {
+                Priority.MY_PRIORITY -> "My Priority"
+                Priority.PROMOTIONAL -> "Promotional"
+                Priority.SPAM -> "Spam"
+                Priority.IMPORTANT -> "Important"
+            }
+        }
+
+        // Generate AI Summary for the whole batch
+        // We limit to the top 20 latest to avoid token limits if the list is huge
+        val summaryInput = notifications.take(20)
+            .joinToString("\n") { "${it.packageName}: ${it.title} - ${it.text}" }
+        val batchSummary = GeminiService.summarizeNotification(
+            "",
+            summaryInput,
+            "Multiple Apps"
+        )
+
+        NotificationHelper.showSummaryNotification(
+            applicationContext,
+            notifications.size,
+            categorizedNotifications,
+            batchSummary
+        )
+
+        // Mark as summarized (optional now as we always re-read, but good for other logic)
+        notificationDao.markAsSummarized(notifications.map { it.id })
     }
 
     override fun onDestroy() {

@@ -51,13 +51,13 @@ object GeminiService {
 
             when {
                 result.contains("My Priority", ignoreCase = true) -> "My Priority"
+                result.contains("Important", ignoreCase = true) -> "Important"
                 result.contains("Promotional", ignoreCase = true) -> "Promotional"
                 result.contains("Spam", ignoreCase = true) -> "Spam"
-                else -> "None"
+                else -> "Important" // Default to Important instead of None
             }
         } catch (e: Exception) {
-            "None"
+            "Important" // Default on error
         }
     }
 }
-
