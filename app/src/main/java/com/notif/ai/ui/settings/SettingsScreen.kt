@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,7 +43,8 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun SettingsScreen(
     onNavigateBatchSchedule: () -> Unit = {},
-    onNavigateAppCategories: () -> Unit = {}
+    onNavigateAppCategories: () -> Unit = {},
+    onNavigateFeedback: () -> Unit = {}
 ) {
     val context = LocalContext.current
 
@@ -155,6 +157,15 @@ fun SettingsScreen(
                     description = "Powered by Gemini Pro",
                     icon = Icons.Default.Star,
                     onClick = { }
+                )
+            }
+
+            item {
+                SettingsItem(
+                    title = "AI Feedback",
+                    description = "Help improve categorization",
+                    icon = Icons.Default.ThumbUp,
+                    onClick = onNavigateFeedback
                 )
             }
 

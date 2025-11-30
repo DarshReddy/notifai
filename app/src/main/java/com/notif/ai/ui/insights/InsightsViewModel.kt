@@ -21,6 +21,9 @@ data class InsightsData(
     val batchedCount: Int,
     val instantCount: Int,
     val screenTime: String,
+    val deepWorkTime: String,
+    val unlocksCount: Int,
+    val focusScore: Int,
     val interruptionReduction: Int,
     val topApps: List<AppUsageData>
 )
@@ -70,6 +73,16 @@ class InsightsViewModel(
                 val screenTimeMillis = UsageStatsHelper.getTotalScreenTime(context)
                 val screenTimeFormatted = UsageStatsHelper.formatMillisToTime(screenTimeMillis)
 
+                // Mock Deep Work (e.g. 60% of screen time)
+                val deepWorkMillis = (screenTimeMillis * 0.6).toLong()
+                val deepWorkFormatted = UsageStatsHelper.formatMillisToTime(deepWorkMillis)
+
+                val unlocks = UsageStatsHelper.getUnlocksCount(context)
+
+                // Focus Score (Inverse of unlocks/hour + high interruption reduction)
+                val focusScore =
+                    (reductionPercent * 0.5 + (100 - (unlocks * 2).coerceAtMost(100)) * 0.5).toInt()
+
                 // Get notification counts per app
                 val notificationCounts = todayNotifications
                     .groupBy { it.packageName }
@@ -82,7 +95,7 @@ class InsightsViewModel(
                     // Fallback to just notification counts
                     notificationCounts.entries
                         .sortedByDescending { it.value }
-                        .take(5)
+                        .take(4)
                         .map { entry ->
                             val appName =
                                 entry.key.split(".").lastOrNull()?.replaceFirstChar {
@@ -97,6 +110,9 @@ class InsightsViewModel(
                     batchedCount = batchedCount,
                     instantCount = instantCount,
                     screenTime = screenTimeFormatted,
+                    deepWorkTime = deepWorkFormatted,
+                    unlocksCount = unlocks,
+                    focusScore = focusScore,
                     interruptionReduction = reductionPercent,
                     topApps = topApps
                 )
@@ -125,11 +141,7 @@ class InsightsViewModel(
             repository.saveUserFeedback(feedback)
 
             // Update the notification locally so UI reflects the change immediately
-            // If the user sets it to IGNORE, we might want to delete it or just update it.
-            // Since getAllNotifications filters out IGNORE, it should disappear from the list.
             if (correctPriority == Priority.IGNORE) {
-                // We should probably update category to IGNORE as well for consistency if we kept it
-                // But since we are filtering out IGNORE in DAO, updating priority to IGNORE will hide it.
                 val updatedNotification = notification.copy(
                     priority = correctPriority,
                     category = NotificationCategory.IGNORE

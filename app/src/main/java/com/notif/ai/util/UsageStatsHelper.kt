@@ -66,7 +66,7 @@ object UsageStatsHelper {
             if (packageName == "android" || packageName.contains("systemui") || usageStats.totalTimeInForeground <= 0) return@forEach
             if (!seen.add(packageName)) return@forEach
             val notifCount = notificationCounts[packageName] ?: 0
-            if (notifCount <= 0) return@forEach
+            // Include apps with usage even if 0 notifications
             try {
                 val appInfo =
                     packageManager.getApplicationInfo(packageName, PackageManager.GET_META_DATA)
@@ -82,7 +82,8 @@ object UsageStatsHelper {
             } catch (_: PackageManager.NameNotFoundException) {
             }
         }
-        return appDataList.sortedByDescending { it.notificationCount }.take(5)
+        // Return top apps by usage time
+        return appDataList.sortedByDescending { it.usageTimeMillis }.take(4)
     }
 
     fun getTotalScreenTime(context: Context): Long {
@@ -150,6 +151,24 @@ object UsageStatsHelper {
         mergedSessions.add(Pair(currentStart, currentEnd))
 
         return mergedSessions.sumOf { it.second - it.first }
+    }
+
+    fun getUnlocksCount(context: Context): Int {
+        val usageStatsManager =
+            context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val start = dayStartMillis()
+        val end = System.currentTimeMillis()
+        val events = usageStatsManager.queryEvents(start, end)
+        var unlocks = 0
+        while (events.hasNextEvent()) {
+            val event = UsageEvents.Event()
+            events.getNextEvent(event)
+            // KEYGUARD_HIDDEN is a good proxy for unlock
+            if (event.eventType == UsageEvents.Event.KEYGUARD_HIDDEN) {
+                unlocks++
+            }
+        }
+        return unlocks
     }
 
     fun formatMillisToTime(millis: Long): String {

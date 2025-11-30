@@ -1,7 +1,7 @@
 package com.notif.ai.ui.insights
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,22 +15,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.TrendingDown
-import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.NotificationsActive
-import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -39,32 +33,27 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.notif.ai.data.NotificationEntity
-import com.notif.ai.util.Priority
+import com.notif.ai.util.AppUsageData
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InsightsScreen(viewModel: InsightsViewModel) {
     val insightsData by viewModel.insightsData.collectAsState()
-    val recentPredictions by viewModel.recentPredictions.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        "AI Feedback",
+                        "Insights",
                         fontWeight = FontWeight.Bold,
                         fontSize = 24.sp
                     )
@@ -94,340 +83,199 @@ fun InsightsScreen(viewModel: InsightsViewModel) {
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // Top Cards: Deep Work & Unlocks
                 item {
-                    Text(
-                        "Recent Predictions",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-
-                if (recentPredictions.isEmpty()) {
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(24.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(
-                                    "No predictions yet",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                                )
-                            }
-                        }
-                    }
-                } else {
-                    items(recentPredictions) { notification ->
-                        PredictionFeedbackItem(
-                            notification = notification,
-                            onFeedback = { priority ->
-                                viewModel.submitFeedback(notification, priority)
-                            }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        StatCard(
+                            title = "DEEP WORK",
+                            value = data.deepWorkTime,
+                            modifier = Modifier.weight(1f),
+                            valueColor = Color(0xFF2196F3)
+                        )
+                        StatCard(
+                            title = "UNLOCKS",
+                            value = data.unlocksCount.toString(),
+                            modifier = Modifier.weight(1f),
+                            valueColor = Color(0xFFF44336)
                         )
                     }
                 }
 
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
+                // Gemini Daily Analysis
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                        )
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF3E5F5)) // Light Purple
                     ) {
-                        Column(
-                            modifier = Modifier.padding(20.dp)
-                        ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = null,
+                                    tint = Color(0xFF9C27B0)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    "Gemini Daily Analysis",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                "You've saved 45 mins today by batching promotional alerts. Your focus peak was between 10 AM - 12 PM. Great job maintaining deep work blocks!",
+                                fontSize = 14.sp,
+                                color = Color.Black.copy(alpha = 0.7f),
+                                lineHeight = 20.sp
+                            )
+                        }
+                    }
+                }
+
+                // App Usage Split
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Text(
+                                "App Usage Split",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(20.dp))
                             Row(
+                                modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.TrendingDown,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(32.dp)
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column {
-                                    Text(
-                                        "${data.interruptionReduction}% Less Interruptions",
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                    Text(
-                                        "Notifa batched ${data.batchedCount} notifications today",
-                                        fontSize = 14.sp,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
-                                            alpha = 0.7f
+                                // Chart (Simplified as a ring chart placeholder)
+                                Box(
+                                    modifier = Modifier.size(120.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    UsagePieChart(data.topApps)
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            "Total",
+                                            fontSize = 12.sp,
+                                            color = Color.Gray
                                         )
-                                    )
+                                        Text(
+                                            data.screenTime,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(24.dp))
+                                // Legend
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    data.topApps.take(4).forEachIndexed { index, app ->
+                                        UsageLegendItem(
+                                            color = getColorForIndex(index),
+                                            label = app.appName,
+                                            percentage = "${app.usageTimeMillis / 60000}m" // Show minutes
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
 
+                // Focus Master
                 item {
-                    Text(
-                        "Phone Usage",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-
-                item {
-                    Row(
+                    Card(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
-                        InsightCard(
-                            title = "Screen Time",
-                            value = data.screenTime,
-                            icon = Icons.Default.PhoneAndroid,
-                            color = Color(0xFF6366F1),
-                            modifier = Modifier.weight(1f)
-                        )
-                        InsightCard(
-                            title = "Interruptions",
-                            value = data.instantCount.toString(),
-                            icon = Icons.Default.NotificationsActive,
-                            color = Color(0xFFEC4899),
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        InsightCard(
-                            title = "Batched",
-                            value = data.batchedCount.toString(),
-                            icon = Icons.Default.AccessTime,
-                            color = Color(0xFF10B981),
-                            modifier = Modifier.weight(1f)
-                        )
-                        InsightCard(
-                            title = "Total Today",
-                            value = data.totalNotifications.toString(),
-                            icon = Icons.Default.Notifications,
-                            color = Color(0xFFF59E0B),
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
-                item {
-                    Text(
-                        "Top Apps",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-
-                if (data.topApps.isEmpty()) {
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(24.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.Star, // Medal icon alternative
+                                        contentDescription = null,
+                                        tint = Color(0xFF2196F3)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        "Focus Master",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF2196F3)
+                                    )
+                                }
                                 Text(
-                                    "No data yet",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                                )
-                                Text(
-                                    "Send yourself some notifications to see stats",
+                                    "${data.focusScore}%",
                                     fontSize = 14.sp,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                                    textAlign = TextAlign.Center
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF2196F3)
                                 )
                             }
-                        }
-                    }
-                } else {
-                    items(data.topApps.size) { index ->
-                        val app = data.topApps[index]
-                        AppUsageItem(
-                            appName = app.appName,
-                            count = "${app.notificationCount} notifications",
-                            value = app.notificationCount,
-                            color = getColorForIndex(index)
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun PredictionFeedbackItem(
-    notification: NotificationEntity,
-    onFeedback: (Priority) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = notification.packageName.substringAfterLast("."),
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.primary
-                )
-
-                Box {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .clickable { expanded = true }
-                            .padding(4.dp)
-                    ) {
-                        Text(
-                            text = when (notification.priority) {
-                                Priority.MY_PRIORITY -> "My Priority"
-                                Priority.IMPORTANT -> "Important"
-                                Priority.PROMOTIONAL -> "Promotional"
-                                Priority.SPAM -> "Spam"
-                                Priority.IGNORE -> "Ignore"
-                            },
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Icon(Icons.Default.ArrowDropDown, contentDescription = "Edit")
-                    }
-
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        Priority.values().forEach { priority ->
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        when (priority) {
-                                            Priority.MY_PRIORITY -> "My Priority"
-                                            Priority.IMPORTANT -> "Important"
-                                            Priority.PROMOTIONAL -> "Promotional"
-                                            Priority.SPAM -> "Spam"
-                                            Priority.IGNORE -> "Ignore"
-                                        }
-                                    )
-                                },
-                                onClick = {
-                                    onFeedback(priority)
-                                    expanded = false
-                                }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            LinearProgressIndicator(
+                                progress = { data.focusScore / 100f },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(8.dp),
+                                color = Color(0xFF2196F3),
+                                trackColor = Color(0xFFE3F2FD),
+                                strokeCap = StrokeCap.Round,
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                "1 more hour of deep work to unlock badge.",
+                                fontSize = 12.sp,
+                                color = Color.Gray
                             )
                         }
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(4.dp))
-            if (notification.title.isNotEmpty()) {
-                Text(
-                    text = notification.title,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
-                )
-            }
-            if (notification.text.isNotEmpty()) {
-                Text(
-                    text = notification.text,
-                    fontSize = 14.sp,
-                    maxLines = 2,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                )
-            }
         }
     }
 }
 
-fun getColorForIndex(index: Int): Color {
-    val colors = listOf(
-        Color(0xFF25D366),
-        Color(0xFFEA4335),
-        Color(0xFF4A154B),
-        Color(0xFFE4405F),
-        Color(0xFF3B82F6)
-    )
-    return colors[index % colors.size]
-}
-
 @Composable
-fun InsightCard(
+fun StatCard(
     title: String,
     value: String,
-    icon: ImageVector,
-    color: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    valueColor: Color
 ) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(color.copy(alpha = 0.2f), RoundedCornerShape(10.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = color,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-            Spacer(modifier = Modifier.height(12.dp))
             Text(
                 value,
-                fontSize = 24.sp,
+                fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = valueColor
             )
             Text(
                 title,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
         }
@@ -435,54 +283,62 @@ fun InsightCard(
 }
 
 @Composable
-fun AppUsageItem(
-    appName: String,
-    count: String,
-    value: Int,
-    color: Color
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
+fun UsageLegendItem(color: Color, label: String, percentage: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(color.copy(alpha = 0.2f), RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    appName.first().toString().uppercase(),
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = color
-                )
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    appName,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    count,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
-            }
-            Text(
-                "$value",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = color
+                .size(10.dp)
+                .background(color, CircleShape)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            label,
+            fontSize = 14.sp,
+            color = Color.Gray,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            percentage,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.Gray
+        )
+    }
+}
+
+@Composable
+fun UsagePieChart(apps: List<AppUsageData>) {
+    Canvas(modifier = Modifier.size(120.dp)) {
+        val total = apps.sumOf { it.usageTimeMillis }.toFloat().coerceAtLeast(1f)
+        var startAngle = -90f
+
+        // Draw background circle
+        drawCircle(
+            color = Color.LightGray.copy(alpha = 0.2f),
+            style = Stroke(width = 20.dp.toPx())
+        )
+
+        apps.forEachIndexed { index, app ->
+            val sweepAngle = (app.usageTimeMillis / total) * 360f
+            drawArc(
+                color = getColorForIndex(index),
+                startAngle = startAngle,
+                sweepAngle = sweepAngle,
+                useCenter = false,
+                style = Stroke(width = 20.dp.toPx(), cap = StrokeCap.Round)
             )
+            startAngle += sweepAngle
         }
     }
+}
+
+fun getColorForIndex(index: Int): Color {
+    val colors = listOf(
+        Color(0xFF2196F3), // Blue
+        Color(0xFF4CAF50), // Green
+        Color(0xFFFFC107), // Amber
+        Color(0xFFF44336), // Red
+        Color(0xFF9C27B0)  // Purple
+    )
+    return colors[index % colors.size]
 }

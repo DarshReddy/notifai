@@ -3,7 +3,7 @@ package com.notif.ai.ui
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -20,7 +20,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.notif.ai.ui.inbox.InboxScreen
+import com.notif.ai.ui.feedback.FeedbackScreen
+import com.notif.ai.ui.home.HomeScreen
+import com.notif.ai.ui.home.HomeViewModel
 import com.notif.ai.ui.insights.InsightsScreen
 import com.notif.ai.ui.insights.InsightsViewModel
 import com.notif.ai.ui.navigation.Screen
@@ -33,6 +35,7 @@ import com.notif.ai.ui.settings.SettingsScreen
 @Composable
 fun MainScreen(
     notificationListViewModel: NotificationListViewModel,
+    homeViewModel: HomeViewModel,
     insightsViewModel: InsightsViewModel,
     batchScheduleViewModel: BatchScheduleViewModel,
     appCategoriesViewModel: AppCategoriesViewModel
@@ -46,7 +49,7 @@ fun MainScreen(
                 val currentDestination = navBackStackEntry?.destination
 
                 val items = listOf(
-                    BottomNavItem(Screen.Inbox, Icons.Default.Notifications),
+                    BottomNavItem(Screen.Home, Icons.Default.Home),
                     BottomNavItem(Screen.Insights, Icons.Default.BarChart),
                     BottomNavItem(Screen.Settings, Icons.Default.Settings)
                 )
@@ -72,15 +75,23 @@ fun MainScreen(
     ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Inbox.route,
+            startDestination = Screen.Home.route,
             modifier = Modifier.padding(padding)
         ) {
-            composable(Screen.Inbox.route) { InboxScreen(viewModel = notificationListViewModel) }
-            composable(Screen.Insights.route) { InsightsScreen(viewModel = insightsViewModel) }
+            composable(Screen.Home.route) {
+                HomeScreen(
+                    homeViewModel = homeViewModel,
+                    notificationListViewModel = notificationListViewModel
+                )
+            }
+            composable(Screen.Insights.route) {
+                InsightsScreen(viewModel = insightsViewModel)
+            }
             composable(Screen.Settings.route) {
                 SettingsScreen(
                     onNavigateBatchSchedule = { navController.navigate(Screen.BatchSchedule.route) },
-                    onNavigateAppCategories = { navController.navigate(Screen.AppCategories.route) }
+                    onNavigateAppCategories = { navController.navigate(Screen.AppCategories.route) },
+                    onNavigateFeedback = { navController.navigate(Screen.Feedback.route) }
                 )
             }
             composable(Screen.BatchSchedule.route) {
@@ -93,6 +104,12 @@ fun MainScreen(
                 AppCategoriesScreen(
                     onBack = { navController.popBackStack() },
                     viewModel = appCategoriesViewModel
+                )
+            }
+            composable(Screen.Feedback.route) {
+                FeedbackScreen(
+                    viewModel = insightsViewModel,
+                    onBack = { navController.popBackStack() }
                 )
             }
         }

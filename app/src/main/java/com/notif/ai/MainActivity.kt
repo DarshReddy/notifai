@@ -30,6 +30,7 @@ import com.notif.ai.data.NotificationRepository
 import com.notif.ai.data.PreferencesManager
 import com.notif.ai.ui.MainScreen
 import com.notif.ai.ui.NotificationListViewModel
+import com.notif.ai.ui.home.HomeViewModel
 import com.notif.ai.ui.insights.InsightsViewModel
 import com.notif.ai.ui.onboarding.OnboardingScreen
 import com.notif.ai.ui.settings.AppCategoriesViewModel
@@ -44,6 +45,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var preferencesManager: PreferencesManager
     private lateinit var repository: NotificationRepository
     private lateinit var notificationListViewModel: NotificationListViewModel
+    private lateinit var homeViewModel: HomeViewModel
     private lateinit var insightsViewModel: InsightsViewModel
     private lateinit var batchScheduleViewModel: BatchScheduleViewModel
     private lateinit var appCategoriesViewModel: AppCategoriesViewModel
@@ -71,6 +73,7 @@ class MainActivity : ComponentActivity() {
         val database = AppDatabase.getDatabase(applicationContext)
         repository = NotificationRepository(database.notificationDao(), database.userFeedbackDao())
         notificationListViewModel = NotificationListViewModel(repository)
+        homeViewModel = HomeViewModel()
         insightsViewModel =
             InsightsViewModel(repository, applicationContext)
         val batchRepo = BatchScheduleRepository(database.batchScheduleDao())
@@ -109,6 +112,7 @@ class MainActivity : ComponentActivity() {
                             false -> {
                                 MainScreen(
                                     notificationListViewModel = notificationListViewModel,
+                                    homeViewModel = homeViewModel,
                                     insightsViewModel = insightsViewModel,
                                     batchScheduleViewModel = batchScheduleViewModel,
                                     appCategoriesViewModel = appCategoriesViewModel
