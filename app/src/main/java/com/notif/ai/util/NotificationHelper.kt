@@ -131,7 +131,7 @@ object NotificationHelper {
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
             .setCustomContentView(notificationLayout)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(false)
             .setOngoing(true) // Sticky
