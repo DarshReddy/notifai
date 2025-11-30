@@ -1,5 +1,6 @@
 package com.notif.ai.ui.home
 
+import android.text.format.DateUtils
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,8 +44,9 @@ fun HomeScreen(
     notificationListViewModel: NotificationListViewModel
 ) {
     val isFocusModeEnabled by homeViewModel.isFocusModeEnabled.collectAsState()
+    val primeTask by homeViewModel.primeTask.collectAsState()
     val notifications by notificationListViewModel.notifications.collectAsState()
-    // Filter for "Pulse" (maybe last few items)
+    // Filter for "Pulse" (last few items)
     val pulseItems = notifications.take(5)
 
     LazyColumn(
@@ -68,7 +70,7 @@ fun HomeScreen(
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "Amit",
+                        text = "User", // Dynamic user name later
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
@@ -143,13 +145,16 @@ fun HomeScreen(
                                     Color.White.copy(alpha = 0.5f),
                                     RoundedCornerShape(4.dp)
                                 )
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                                .padding(
+                                    horizontal = 8.dp,
+                                    vertical = 4.dp
+                                ), // Should add clickable here
                             color = Color.Gray
                         )
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = homeViewModel.primeTask,
+                        text = primeTask,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.Black
@@ -226,8 +231,17 @@ fun HomeScreen(
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
                         )
+
+                        val lastUpdate =
+                            pulseItems.firstOrNull()?.timestamp ?: System.currentTimeMillis()
+                        val timeAgo = DateUtils.getRelativeTimeSpanString(
+                            lastUpdate,
+                            System.currentTimeMillis(),
+                            DateUtils.MINUTE_IN_MILLIS
+                        )
+
                         Text(
-                            text = "10m ago", // Mock time
+                            text = timeAgo.toString(),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )

@@ -10,9 +10,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -73,7 +71,7 @@ class MainActivity : ComponentActivity() {
         val database = AppDatabase.getDatabase(applicationContext)
         repository = NotificationRepository(database.notificationDao(), database.userFeedbackDao())
         notificationListViewModel = NotificationListViewModel(repository)
-        homeViewModel = HomeViewModel()
+        homeViewModel = HomeViewModel(repository)
         insightsViewModel =
             InsightsViewModel(repository, applicationContext)
         val batchRepo = BatchScheduleRepository(database.batchScheduleDao())
@@ -83,45 +81,42 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             NotifaTheme {
-                Scaffold {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(it),
-                        color = MaterialTheme.colorScheme.background
-                    ) {
-                        val scope = rememberCoroutineScope()
-                        var showOnboarding by remember { mutableStateOf<Boolean?>(null) }
+                Surface(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    val scope = rememberCoroutineScope()
+                    var showOnboarding by remember { mutableStateOf<Boolean?>(null) }
 
-                        LaunchedEffect(Unit) {
-                            scope.launch {
-                                val completed = preferencesManager.onboardingCompleted.first()
-                                showOnboarding = !completed
-                            }
+                    LaunchedEffect(Unit) {
+                        scope.launch {
+                            val completed = preferencesManager.onboardingCompleted.first()
+                            showOnboarding = !completed
+                        }
+                    }
+
+                    when (showOnboarding) {
+                        true -> {
+                            OnboardingScreen(
+                                onComplete = {
+                                    showOnboarding = false
+                                }
+                            )
                         }
 
-                        when (showOnboarding) {
-                            true -> {
-                                OnboardingScreen(
-                                    onComplete = {
-                                        showOnboarding = false
-                                    }
-                                )
-                            }
+                        false -> {
+                            MainScreen(
+                                notificationListViewModel = notificationListViewModel,
+                                homeViewModel = homeViewModel,
+                                insightsViewModel = insightsViewModel,
+                                batchScheduleViewModel = batchScheduleViewModel,
+                                appCategoriesViewModel = appCategoriesViewModel
+                            )
+                        }
 
-                            false -> {
-                                MainScreen(
-                                    notificationListViewModel = notificationListViewModel,
-                                    homeViewModel = homeViewModel,
-                                    insightsViewModel = insightsViewModel,
-                                    batchScheduleViewModel = batchScheduleViewModel,
-                                    appCategoriesViewModel = appCategoriesViewModel
-                                )
-                            }
-
-                            null -> {
-                                // Loading state
-                            }
+                        null -> {
+                            // Loading state
                         }
                     }
                 }
@@ -135,8 +130,6 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             preferencesManager.setNotificationPermissionGranted(hasPermission)
         }
-        // If notifications exist, make sure summary is shown (InboxViewModel listener will update subsequently)
-        // No-op here; channel creation in onCreate ensures readiness
     }
 
     private fun isNotificationListenerEnabled(): Boolean {

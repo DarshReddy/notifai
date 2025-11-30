@@ -128,7 +128,7 @@ fun InsightsScreen(viewModel: InsightsViewModel) {
                             }
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                "You've saved 45 mins today by batching promotional alerts. Your focus peak was between 10 AM - 12 PM. Great job maintaining deep work blocks!",
+                                text = data.dailyAnalysis,
                                 fontSize = 14.sp,
                                 color = Color.Black.copy(alpha = 0.7f),
                                 lineHeight = 20.sp

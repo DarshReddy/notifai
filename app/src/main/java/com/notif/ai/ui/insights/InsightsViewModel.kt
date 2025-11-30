@@ -3,6 +3,7 @@ package com.notif.ai.ui.insights
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.notif.ai.ai.GeminiService
 import com.notif.ai.data.NotificationCategory
 import com.notif.ai.data.NotificationEntity
 import com.notif.ai.data.NotificationRepository
@@ -25,7 +26,8 @@ data class InsightsData(
     val unlocksCount: Int,
     val focusScore: Int,
     val interruptionReduction: Int,
-    val topApps: List<AppUsageData>
+    val topApps: List<AppUsageData>,
+    val dailyAnalysis: String
 )
 
 class InsightsViewModel(
@@ -73,8 +75,14 @@ class InsightsViewModel(
                 val screenTimeMillis = UsageStatsHelper.getTotalScreenTime(context)
                 val screenTimeFormatted = UsageStatsHelper.formatMillisToTime(screenTimeMillis)
 
-                // Mock Deep Work (e.g. 60% of screen time)
-                val deepWorkMillis = (screenTimeMillis * 0.6).toLong()
+                // Mock Deep Work (e.g. 60% of screen time) - Refined: Time spent in non-top-5 usage apps + screen off time? 
+                // Let's stick to a simpler heuristic: Screen Time - Entertainment App Time.
+                // For now, let's keep it simple as before but maybe assume Deep Work is (Total Time - Screen Time) assuming working offline? 
+                // Or simply track "Focus Mode" duration if we had it.
+                // Let's keep 60% heuristic but maybe randomize it slightly or base it on unlocks.
+                // Less unlocks = More deep work.
+                val deepWorkMillis =
+                    (screenTimeMillis * 0.6).toLong() // Placeholder for advanced logic
                 val deepWorkFormatted = UsageStatsHelper.formatMillisToTime(deepWorkMillis)
 
                 val unlocks = UsageStatsHelper.getUnlocksCount(context)
@@ -105,6 +113,16 @@ class InsightsViewModel(
                         }
                 }
 
+                val topAppName = topApps.firstOrNull()?.appName ?: "None"
+
+                val analysis = GeminiService.generateDailyAnalysis(
+                    screenTime = screenTimeFormatted,
+                    unlocks = unlocks,
+                    batchedCount = batchedCount,
+                    focusScore = focusScore,
+                    topApp = topAppName
+                )
+
                 _insightsData.value = InsightsData(
                     totalNotifications = totalCount,
                     batchedCount = batchedCount,
@@ -114,7 +132,8 @@ class InsightsViewModel(
                     unlocksCount = unlocks,
                     focusScore = focusScore,
                     interruptionReduction = reductionPercent,
-                    topApps = topApps
+                    topApps = topApps,
+                    dailyAnalysis = analysis
                 )
             }
         }

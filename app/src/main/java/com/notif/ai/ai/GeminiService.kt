@@ -120,4 +120,60 @@ object GeminiService {
             "Important"
         }
     }
+
+    suspend fun generatePrimeTask(notifications: List<NotificationData>): String {
+        if (notifications.isEmpty()) return "You're all caught up! Take a break."
+
+        return try {
+            val notifListString = notifications.joinToString("\n") {
+                "- [${it.appName}] ${it.title}: ${it.text}"
+            }
+
+            val prompt = """
+                Identify the single most important action item or task from these high-priority notifications.
+                Return ONLY the task description in one sentence (max 15 words).
+                If there are no clear tasks, summarize the most urgent update.
+                Write it as a command or statement addressed to the user.
+
+                Notifications:
+                $notifListString
+
+                Prime Task:
+            """.trimIndent()
+
+            val response = generativeModel.generateContent(prompt)
+            response.text?.trim() ?: "Check your important notifications."
+        } catch (e: Exception) {
+            "Check your priority messages."
+        }
+    }
+
+    suspend fun generateDailyAnalysis(
+        screenTime: String,
+        unlocks: Int,
+        batchedCount: Int,
+        focusScore: Int,
+        topApp: String
+    ): String {
+        return try {
+            val prompt = """
+                Generate a short, encouraging daily analysis (max 30 words) for the user based on these stats:
+                - Screen Time: $screenTime
+                - Unlocks: $unlocks
+                - Batched Notifications (Distractions blocked): $batchedCount
+                - Focus Score: $focusScore/100
+                - Most used app: $topApp
+
+                Highlight the positives (e.g., interruptions saved, good focus score). 
+                If stats are bad (high screen time/unlocks), gently suggest improvement.
+                
+                Analysis:
+            """.trimIndent()
+
+            val response = generativeModel.generateContent(prompt)
+            response.text?.trim() ?: "You're doing great! Keep managing your focus."
+        } catch (e: Exception) {
+            "Stay focused and productive today!"
+        }
+    }
 }
