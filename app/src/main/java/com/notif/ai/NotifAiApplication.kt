@@ -15,7 +15,12 @@ import java.util.concurrent.TimeUnit
 
 class NotifAiApplication : Application(), Configuration.Provider {
     val database by lazy { AppDatabase.getDatabase(this) }
-    val repository by lazy { NotificationRepository(database.notificationDao()) }
+    val repository by lazy {
+        NotificationRepository(
+            database.notificationDao(),
+            database.userFeedbackDao()
+        )
+    }
 
     override fun onCreate() {
         super.onCreate()

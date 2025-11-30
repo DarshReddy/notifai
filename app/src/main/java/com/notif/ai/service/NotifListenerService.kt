@@ -3,11 +3,13 @@ package com.notif.ai.service
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import com.notif.ai.ai.GeminiService
+import com.notif.ai.ai.NotificationData
 import com.notif.ai.data.AppDatabase
 import com.notif.ai.data.AppPreferenceRepository
 import com.notif.ai.data.NotificationCategory
 import com.notif.ai.data.NotificationDao
 import com.notif.ai.data.NotificationEntity
+import com.notif.ai.data.UserFeedbackDao
 import com.notif.ai.util.NotificationHelper
 import com.notif.ai.util.Priority
 import kotlinx.coroutines.CoroutineScope
@@ -22,12 +24,14 @@ class NotifListenerService : NotificationListenerService() {
 
     private lateinit var notificationDao: NotificationDao
     private lateinit var appPrefRepo: AppPreferenceRepository
+    private lateinit var userFeedbackDao: UserFeedbackDao
 
     override fun onCreate() {
         super.onCreate()
         val db = AppDatabase.getDatabase(applicationContext)
         notificationDao = db.notificationDao()
         appPrefRepo = AppPreferenceRepository(db.appPreferenceDao())
+        userFeedbackDao = db.userFeedbackDao()
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
@@ -48,8 +52,16 @@ class NotifListenerService : NotificationListenerService() {
             if (title.isNullOrEmpty() && text.isNullOrEmpty()) return
 
             scope.launch {
+                // Fetch user feedback for this app to help Gemini learn
+                val userFeedback = userFeedbackDao.getFeedbackForApp(packageName)
+                
                 val priorityString =
-                    GeminiService.categorizePriority(title ?: "", text ?: "", packageName)
+                    GeminiService.categorizePriority(
+                        title ?: "",
+                        text ?: "",
+                        packageName,
+                        userFeedback
+                    )
 
                 val priority = when (priorityString) {
                     "My Priority" -> Priority.MY_PRIORITY
@@ -84,18 +96,23 @@ class NotifListenerService : NotificationListenerService() {
                     cancelNotification(sbn.key)
                     updateBatchSummary()
                 } else {
-                    // For instant notifications, we might not want to re-summarize immediately
-                    // unless we want the count to be correct in the sticky notification.
-                    // But usually the sticky notification is for the "Summary" (Batch).
-                    // However, updateBatchSummary also updates the total counts.
                     updateBatchSummary()
                 }
             }
         }
     }
 
+    private fun getAppName(packageName: String): String {
+        return try {
+            val pm = applicationContext.packageManager
+            val appInfo = pm.getApplicationInfo(packageName, 0)
+            pm.getApplicationLabel(appInfo).toString()
+        } catch (e: Exception) {
+            packageName
+        }
+    }
+
     private suspend fun updateBatchSummary() {
-        // Fetch all active batched notifications
         val notifications = notificationDao.getAllBatchedNotifications()
 
         if (notifications.isEmpty()) {
@@ -103,7 +120,6 @@ class NotifListenerService : NotificationListenerService() {
             return
         }
 
-        // Group by Priority for UI
         val categorizedNotifications = notifications.groupBy {
             when (it.priority) {
                 Priority.MY_PRIORITY -> "My Priority"
@@ -113,15 +129,15 @@ class NotifListenerService : NotificationListenerService() {
             }
         }
 
-        // Generate AI Summary for the whole batch
-        // We limit to the top 20 latest to avoid token limits if the list is huge
-        val summaryInput = notifications.take(20)
-            .joinToString("\n") { "${it.packageName}: ${it.title} - ${it.text}" }
-        val batchSummary = GeminiService.summarizeNotification(
-            "",
-            summaryInput,
-            "Multiple Apps"
-        )
+        val summaryInput = notifications.take(20).map {
+            NotificationData(
+                appName = getAppName(it.packageName),
+                title = it.title,
+                text = it.text
+            )
+        }
+
+        val batchSummary = GeminiService.generateBatchSummary(summaryInput)
 
         NotificationHelper.showSummaryNotification(
             applicationContext,
@@ -130,7 +146,6 @@ class NotifListenerService : NotificationListenerService() {
             batchSummary
         )
 
-        // Mark as summarized (optional now as we always re-read, but good for other logic)
         notificationDao.markAsSummarized(notifications.map { it.id })
     }
 

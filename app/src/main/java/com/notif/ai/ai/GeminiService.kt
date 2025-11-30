@@ -3,6 +3,13 @@ package com.notif.ai.ai
 import com.google.firebase.Firebase
 import com.google.firebase.ai.ai
 import com.google.firebase.ai.type.GenerativeBackend
+import com.notif.ai.data.UserFeedback
+
+data class NotificationData(
+    val appName: String,
+    val title: String,
+    val text: String
+)
 
 object GeminiService {
 
@@ -11,39 +18,87 @@ object GeminiService {
             .generativeModel(modelName = "gemini-2.5-flash")
     }
 
-    suspend fun summarizeNotification(title: String, text: String, appName: String): String {
+    suspend fun generateBatchSummary(notifications: List<NotificationData>): String {
+        if (notifications.isEmpty()) return "No notifications."
+
         return try {
+            val notifListString = notifications.joinToString("\n") {
+                "- [${it.appName}] ${it.title}: ${it.text}"
+            }
+
             val prompt = """
-                Summarize this notification in one concise sentence (max 15 words):
-                
-                App: $appName
-                Title: $title
-                Content: $text
-                
-                Provide ONLY the summary, no extra text.
+                You are a smart personal notification assistant.
+                Summarize the following notifications into a single, natural, and concise paragraph (max 30 words).
+
+                Guidelines:
+                - Group related notifications (e.g., "3 messages from WhatsApp", "Updates from Instagram").
+                - Prioritize "My Priority" content (people, urgent tasks, OTPs).
+                - Mention important updates briefly.
+                - Ignore promotional or spam content unless it's the only thing there.
+                - Do not use bullet points. Write like a helpful personal assistant.
+                - If there are messages from people, mention who they are if possible.
+
+                Notifications:
+                $notifListString
+
+                Summary:
             """.trimIndent()
 
             val response = generativeModel.generateContent(prompt)
             response.text?.trim() ?: "Summary unavailable"
         } catch (e: Exception) {
-            "Error: ${e.message}"
+            "Error generating summary"
         }
     }
 
-    suspend fun categorizePriority(title: String, text: String, appName: String): String {
+    suspend fun categorizePriority(
+        title: String,
+        text: String,
+        appName: String,
+        userExamples: List<UserFeedback> = emptyList()
+    ): String {
         return try {
+            val userExamplesString = if (userExamples.isNotEmpty()) {
+                val examples = userExamples.joinToString("\n") {
+                    "Input: [${it.packageName}] ${it.title}: ${it.text}\nOutput: ${it.userCorrectedCategory}"
+                }
+                """
+                User Specific Rules (Highest Priority - Learn from these):
+                $examples
+                """
+            } else {
+                ""
+            }
+
             val prompt = """
-                Analyze this notification from '$appName' and respond with ONLY ONE of the following categories: My Priority, Important, Promotional, Spam
+                Role: You are an Android Notification Classifier. Classify the incoming notification into exactly one category.
 
-                Title: $title
-                Content: $text
+                Categories:
+                1. My Priority: Direct messages from people (WhatsApp, Telegram, SMS), OTPs, Rideshare/Food delivery real-time updates, Calendar events, Alarms.
+                2. Important: Bank transactions, Order shipments, Work emails, System alerts, Breaking news.
+                3. Promotional: Marketing, Discounts, "You might like", "Complete your purchase", Newsletters.
+                4. Spam: Casino, obscure games, vague alerts, unwanted solicitation.
 
-                - My Priority: Urgent, from a person, time-sensitive alerts.
-                - Important: General messages, updates, and news.
-                - Promotional: Advertisements, sales, and marketing messages.
-                - Spam: Unsolicited, irrelevant, or unwanted messages.
+                $userExamplesString
 
-                Response (one category only):
+                General Examples:
+                Input: [com.whatsapp] Mom: Can you pick up milk?
+                Output: My Priority
+
+                Input: [com.amazon.mShop.android.shopping] Deal of the Day: 50% off on shoes!
+                Output: Promotional
+
+                Input: [com.google.android.gm] Bank of America: Your statement is ready.
+                Output: Important
+                
+                Input: [com.uber] Your driver is 2 minutes away.
+                Output: My Priority
+                
+                Input: [com.android.server.telecom] Incoming call from +1234567890
+                Output: My Priority
+
+                Input: [$appName] $title: $text
+                Output:
             """.trimIndent()
 
             val response = generativeModel.generateContent(prompt)
@@ -54,10 +109,10 @@ object GeminiService {
                 result.contains("Important", ignoreCase = true) -> "Important"
                 result.contains("Promotional", ignoreCase = true) -> "Promotional"
                 result.contains("Spam", ignoreCase = true) -> "Spam"
-                else -> "Important" // Default to Important instead of None
+                else -> "Important"
             }
         } catch (e: Exception) {
-            "Important" // Default on error
+            "Important"
         }
     }
 }

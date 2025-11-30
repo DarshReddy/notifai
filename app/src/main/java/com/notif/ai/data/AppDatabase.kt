@@ -9,9 +9,10 @@ import androidx.room.RoomDatabase
     entities = [
         NotificationEntity::class,
         AppPreference::class,
-        BatchSchedule::class
+        BatchSchedule::class,
+        UserFeedback::class
     ],
-    version = 4, // Incremented version number
+    version = 5, // Incremented version number
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -19,6 +20,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun notificationDao(): NotificationDao
     abstract fun appPreferenceDao(): AppPreferenceDao
     abstract fun batchScheduleDao(): BatchScheduleDao
+    abstract fun userFeedbackDao(): UserFeedbackDao
 
     companion object {
         @Volatile

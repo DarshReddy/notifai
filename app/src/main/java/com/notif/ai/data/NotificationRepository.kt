@@ -2,7 +2,10 @@ package com.notif.ai.data
 
 import kotlinx.coroutines.flow.Flow
 
-class NotificationRepository(private val notificationDao: NotificationDao) {
+class NotificationRepository(
+    private val notificationDao: NotificationDao,
+    private val userFeedbackDao: UserFeedbackDao? = null
+) {
 
     fun getAllNotifications(): Flow<List<NotificationEntity>> {
         return notificationDao.getAll()
@@ -34,5 +37,9 @@ class NotificationRepository(private val notificationDao: NotificationDao) {
 
     fun countByPriority(priority: String): Flow<Int> {
         return notificationDao.countByPriority(priority)
+    }
+
+    suspend fun saveUserFeedback(feedback: UserFeedback) {
+        userFeedbackDao?.insert(feedback)
     }
 }

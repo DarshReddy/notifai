@@ -69,7 +69,7 @@ class MainActivity : ComponentActivity() {
         // Initialize dependencies
         preferencesManager = PreferencesManager(applicationContext)
         val database = AppDatabase.getDatabase(applicationContext)
-        repository = NotificationRepository(database.notificationDao())
+        repository = NotificationRepository(database.notificationDao(), database.userFeedbackDao())
         notificationListViewModel = NotificationListViewModel(repository)
         insightsViewModel =
             InsightsViewModel(repository, applicationContext)

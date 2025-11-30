@@ -4,8 +4,11 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.notif.ai.data.NotificationCategory
+import com.notif.ai.data.NotificationEntity
 import com.notif.ai.data.NotificationRepository
+import com.notif.ai.data.UserFeedback
 import com.notif.ai.util.AppUsageData
+import com.notif.ai.util.Priority
 import com.notif.ai.util.UsageStatsHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,6 +33,9 @@ class InsightsViewModel(
     private val _insightsData = MutableStateFlow<InsightsData?>(null)
     val insightsData: StateFlow<InsightsData?> = _insightsData.asStateFlow()
 
+    private val _recentPredictions = MutableStateFlow<List<NotificationEntity>>(emptyList())
+    val recentPredictions: StateFlow<List<NotificationEntity>> = _recentPredictions.asStateFlow()
+
     init {
         loadInsights()
     }
@@ -37,6 +43,9 @@ class InsightsViewModel(
     fun loadInsights() {
         viewModelScope.launch {
             repository.getAllNotifications().collect { notifications ->
+                // Update recent predictions for feedback UI
+                _recentPredictions.value = notifications.take(50)
+
                 // Get today's notifications
                 val calendar = java.util.Calendar.getInstance()
                 calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
@@ -94,5 +103,39 @@ class InsightsViewModel(
             }
         }
     }
-}
 
+    fun submitFeedback(notification: NotificationEntity, correctPriority: Priority) {
+        viewModelScope.launch {
+            val appName = try {
+                val pm = context.packageManager
+                val appInfo = pm.getApplicationInfo(notification.packageName, 0)
+                pm.getApplicationLabel(appInfo).toString()
+            } catch (e: Exception) {
+                notification.packageName
+            }
+
+            val feedback = UserFeedback(
+                packageName = notification.packageName,
+                appName = appName,
+                title = notification.title,
+                text = notification.text,
+                predictedCategory = mapPriorityToCategoryString(notification.priority),
+                userCorrectedCategory = mapPriorityToCategoryString(correctPriority)
+            )
+            repository.saveUserFeedback(feedback)
+
+            // Update the notification locally so UI reflects the change immediately
+            val updatedNotification = notification.copy(priority = correctPriority)
+            repository.insert(updatedNotification)
+        }
+    }
+
+    private fun mapPriorityToCategoryString(priority: Priority): String {
+        return when (priority) {
+            Priority.MY_PRIORITY -> "My Priority"
+            Priority.IMPORTANT -> "Important"
+            Priority.PROMOTIONAL -> "Promotional"
+            Priority.SPAM -> "Spam"
+        }
+    }
+}
