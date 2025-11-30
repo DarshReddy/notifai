@@ -22,6 +22,6 @@ data class NotificationEntity(
 
 enum class NotificationCategory {
     INSTANT,
-    BATCHED
+    BATCHED,
+    IGNORE
 }
-

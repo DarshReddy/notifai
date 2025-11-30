@@ -12,7 +12,8 @@ interface NotificationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(notification: NotificationEntity)
 
-    @Query("SELECT * FROM notifications ORDER BY timestamp DESC")
+    // Exclude IGNORE category from default views if any sneak in
+    @Query("SELECT * FROM notifications WHERE category != 'IGNORE' ORDER BY timestamp DESC")
     fun getAll(): Flow<List<NotificationEntity>>
 
     @Query("SELECT * FROM notifications WHERE priority = :priority ORDER BY timestamp DESC")

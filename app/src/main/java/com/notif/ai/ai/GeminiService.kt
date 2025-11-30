@@ -78,6 +78,7 @@ object GeminiService {
                 2. Important: Bank transactions, Order shipments, Work emails, System alerts, Breaking news.
                 3. Promotional: Marketing, Discounts, "You might like", "Complete your purchase", Newsletters.
                 4. Spam: Casino, obscure games, vague alerts, unwanted solicitation.
+                5. Ignore: Persistent silent notifications, system logs, debugging info, "running in background", battery optimization alerts.
 
                 $userExamplesString
 
@@ -96,6 +97,9 @@ object GeminiService {
                 
                 Input: [com.android.server.telecom] Incoming call from +1234567890
                 Output: My Priority
+                
+                Input: [android] USB debugging connected
+                Output: Ignore
 
                 Input: [$appName] $title: $text
                 Output:
@@ -109,6 +113,7 @@ object GeminiService {
                 result.contains("Important", ignoreCase = true) -> "Important"
                 result.contains("Promotional", ignoreCase = true) -> "Promotional"
                 result.contains("Spam", ignoreCase = true) -> "Spam"
+                result.contains("Ignore", ignoreCase = true) -> "Ignore"
                 else -> "Important"
             }
         } catch (e: Exception) {

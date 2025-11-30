@@ -166,7 +166,7 @@ fun InsightsScreen(viewModel: InsightsViewModel) {
                                         color = MaterialTheme.colorScheme.onPrimaryContainer
                                     )
                                     Text(
-                                        "NotifAi batched ${data.batchedCount} notifications today",
+                                        "Notifa batched ${data.batchedCount} notifications today",
                                         fontSize = 14.sp,
                                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
                                             alpha = 0.7f
@@ -324,6 +324,7 @@ fun PredictionFeedbackItem(
                                 Priority.IMPORTANT -> "Important"
                                 Priority.PROMOTIONAL -> "Promotional"
                                 Priority.SPAM -> "Spam"
+                                Priority.IGNORE -> "Ignore"
                             },
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
@@ -345,6 +346,7 @@ fun PredictionFeedbackItem(
                                             Priority.IMPORTANT -> "Important"
                                             Priority.PROMOTIONAL -> "Promotional"
                                             Priority.SPAM -> "Spam"
+                                            Priority.IGNORE -> "Ignore"
                                         }
                                     )
                                 },

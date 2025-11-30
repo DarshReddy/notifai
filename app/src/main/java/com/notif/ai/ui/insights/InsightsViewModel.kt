@@ -125,8 +125,20 @@ class InsightsViewModel(
             repository.saveUserFeedback(feedback)
 
             // Update the notification locally so UI reflects the change immediately
-            val updatedNotification = notification.copy(priority = correctPriority)
-            repository.insert(updatedNotification)
+            // If the user sets it to IGNORE, we might want to delete it or just update it.
+            // Since getAllNotifications filters out IGNORE, it should disappear from the list.
+            if (correctPriority == Priority.IGNORE) {
+                // We should probably update category to IGNORE as well for consistency if we kept it
+                // But since we are filtering out IGNORE in DAO, updating priority to IGNORE will hide it.
+                val updatedNotification = notification.copy(
+                    priority = correctPriority,
+                    category = NotificationCategory.IGNORE
+                )
+                repository.insert(updatedNotification)
+            } else {
+                val updatedNotification = notification.copy(priority = correctPriority)
+                repository.insert(updatedNotification)
+            }
         }
     }
 
@@ -136,6 +148,7 @@ class InsightsViewModel(
             Priority.IMPORTANT -> "Important"
             Priority.PROMOTIONAL -> "Promotional"
             Priority.SPAM -> "Spam"
+            Priority.IGNORE -> "Ignore"
         }
     }
 }

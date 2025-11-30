@@ -68,7 +68,19 @@ class NotifListenerService : NotificationListenerService() {
                     "Important" -> Priority.IMPORTANT
                     "Promotional" -> Priority.PROMOTIONAL
                     "Spam" -> Priority.SPAM
+                    "Ignore" -> Priority.IGNORE
                     else -> Priority.IMPORTANT
+                }
+
+                // If it's ignored, we just cancel it and don't insert it into DB (or insert as ignored).
+                // The user said "not be shown anywhere its silently ignored".
+                // If we don't insert it, we can't learn from it later if they change their mind.
+                // But for "silently ignored", we typically want it gone.
+                // However, if we classify as Ignore, we should probably act on it.
+
+                if (priority == Priority.IGNORE) {
+                    cancelNotification(sbn.key)
+                    return@launch
                 }
 
                 val pref = appPrefRepo.get(packageName)
@@ -77,6 +89,12 @@ class NotifListenerService : NotificationListenerService() {
                     packageName.contains("dialer") || packageName.contains("phone") -> NotificationCategory.INSTANT
                     packageName.contains("alarm") || packageName.contains("calendar") -> NotificationCategory.INSTANT
                     else -> NotificationCategory.BATCHED
+                }
+
+                // Double check if preference overrides to IGNORE (if we support that in future)
+                if (category == NotificationCategory.IGNORE) {
+                    cancelNotification(sbn.key)
+                    return@launch
                 }
 
                 val notificationEntity = NotificationEntity(
@@ -126,6 +144,7 @@ class NotifListenerService : NotificationListenerService() {
                 Priority.PROMOTIONAL -> "Promotional"
                 Priority.SPAM -> "Spam"
                 Priority.IMPORTANT -> "Important"
+                Priority.IGNORE -> "Ignore" // Should not happen given logic above, but safety
             }
         }
 

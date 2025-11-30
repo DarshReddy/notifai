@@ -4,5 +4,6 @@ enum class Priority {
     MY_PRIORITY,
     IMPORTANT,
     PROMOTIONAL,
-    SPAM
+    SPAM,
+    IGNORE
 }
