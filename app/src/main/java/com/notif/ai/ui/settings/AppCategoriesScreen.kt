@@ -54,46 +54,50 @@ fun AppCategoriesScreen(onBack: () -> Unit, viewModel: AppCategoriesViewModel? =
             )
         }
     ) { padding ->
-        if (loading?.value == true) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) { CircularProgressIndicator() }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                item {
-                    Text(
-                        "Tap to toggle Instant vs Batched",
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                }
-                items(apps?.value ?: emptyList()) { pref ->
-                    Card(onClick = { viewModel?.toggleCategory(pref.packageName) }) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(pref.appName, fontWeight = FontWeight.Medium)
-                                Text(
-                                    pref.packageName,
-                                    fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            if (loading?.value == true) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) { CircularProgressIndicator() }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    item {
+                        Text(
+                            "Tap to toggle Instant vs Batched",
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                    items(apps?.value ?: emptyList()) { pref ->
+                        Card(onClick = { viewModel?.toggleCategory(pref.packageName) }) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(pref.appName, fontWeight = FontWeight.Medium)
+                                    Text(
+                                        pref.packageName,
+                                        fontSize = 11.sp,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                    )
+                                }
+                                AssistChip(
+                                    onClick = { viewModel?.toggleCategory(pref.packageName) },
+                                    label = { Text(if (pref.category == NotificationCategory.INSTANT) "Instant" else "Batched") }
                                 )
                             }
-                            AssistChip(
-                                onClick = { viewModel?.toggleCategory(pref.packageName) },
-                                label = { Text(if (pref.category == NotificationCategory.INSTANT) "Instant" else "Batched") }
-                            )
                         }
                     }
                 }
