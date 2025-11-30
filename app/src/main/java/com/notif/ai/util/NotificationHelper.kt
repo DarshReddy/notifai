@@ -71,6 +71,7 @@ object NotificationHelper {
 
         val notificationLayout =
             RemoteViews(context.packageName, R.layout.custom_notification_layout)
+
         notificationLayout.setTextViewText(
             R.id.summary_text,
             "Summary available • $lastTotalCount Notifications"
@@ -131,9 +132,10 @@ object NotificationHelper {
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
             .setCustomContentView(notificationLayout)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
             .setAutoCancel(false)
+            .setSilent(true)
             .setOngoing(true) // Sticky
 
         val notificationManager =
@@ -145,6 +147,7 @@ object NotificationHelper {
         if (expandedCategories.contains(category)) {
             expandedCategories.remove(category)
         } else {
+            expandedCategories.clear()
             expandedCategories.add(category)
         }
         renderNotification(context)
