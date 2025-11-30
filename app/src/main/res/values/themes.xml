@@ -2,20 +2,13 @@
 
     <style name="Theme.NotifAi" parent="android:Theme.Material.Light.NoActionBar" />
 
-    <style name="NotificationTitle" parent="android:TextAppearance.Material.Notification.Title">
-        <item name="android:textColor">#FFFFFF</item>
-    </style>
+    <style name="NotificationTitle" parent="android:TextAppearance.Material.Notification.Title" />
 
-    <style name="NotificationText" parent="android:TextAppearance.Material.Notification.Line2">
-        <item name="android:textColor">#BDBDBD</item>
-    </style>
+    <style name="NotificationText" parent="android:TextAppearance.Material.Notification.Line2" />
 
-    <style name="NotificationInfo" parent="android:TextAppearance.Material.Notification.Info">
-        <item name="android:textColor">#BDBDBD</item>
-    </style>
+    <style name="NotificationInfo" parent="android:TextAppearance.Material.Notification.Info" />
 
     <style name="CategoryTitle" parent="android:TextAppearance.Material.Notification.Title">
-        <item name="android:textColor">#FFFFFF</item>
         <item name="android:textStyle">bold</item>
     </style>
 </resources>

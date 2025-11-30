@@ -18,6 +18,14 @@ object NotificationHelper {
     private const val CHANNEL_ID = "notifa_summary_channel"
     private const val NOTIFICATION_ID = 1001
 
+    // Cache the latest data to allow UI updates without re-fetching
+    private var lastTotalCount: Int = 0
+    private var lastCategorizedNotifications: Map<String, List<NotificationEntity>> = emptyMap()
+    private var lastBatchSummary: String? = null
+
+    // Track expanded states
+    private val expandedCategories = mutableSetOf<String>("My Priority")
+
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = "Notifa Summary"
@@ -39,6 +47,15 @@ object NotificationHelper {
         categorizedNotifications: Map<String, List<NotificationEntity>>,
         batchSummary: String?
     ) {
+        // Update cache
+        lastTotalCount = totalCount
+        lastCategorizedNotifications = categorizedNotifications
+        lastBatchSummary = batchSummary
+
+        renderNotification(context)
+    }
+
+    private fun renderNotification(context: Context) {
         createNotificationChannel(context)
 
         val intent = Intent(context, MainActivity::class.java).apply {
@@ -54,23 +71,19 @@ object NotificationHelper {
 
         val notificationLayout =
             RemoteViews(context.packageName, R.layout.custom_notification_layout)
-        notificationLayout.setTextViewText(R.id.app_name, "Notif.ai")
         notificationLayout.setTextViewText(
             R.id.summary_text,
-            "Summary available • $totalCount Notifications"
+            "Summary available • $lastTotalCount Notifications"
         )
 
-        if (batchSummary != null) {
-            // Update the summary text view in the custom layout to show the AI summary
-            // Assuming there is a text view for this, if not we might need to add one or use an existing one
-            // The previous layout had summary_text. Let's see if we can append or replace.
-            notificationLayout.setTextViewText(R.id.summary_text, batchSummary)
+        if (lastBatchSummary != null) {
+            notificationLayout.setTextViewText(R.id.summary_text, lastBatchSummary)
         }
 
         // Clear previous category views
         notificationLayout.removeAllViews(R.id.notification_categories_container)
 
-        categorizedNotifications.forEach { (category, notifications) ->
+        lastCategorizedNotifications.forEach { (category, notifications) ->
             val categoryLayout =
                 RemoteViews(context.packageName, R.layout.notification_category_item)
             categoryLayout.setTextViewText(R.id.category_name, category)
@@ -81,7 +94,7 @@ object NotificationHelper {
                 getCategoryClickIntent(context, category)
             )
 
-            val isExpanded = category == "My Priority" // Expand "My Priority" by default
+            val isExpanded = expandedCategories.contains(category)
             if (isExpanded) {
                 categoryLayout.setViewVisibility(R.id.notifications_container, View.VISIBLE)
                 categoryLayout.setImageViewResource(
@@ -115,7 +128,7 @@ object NotificationHelper {
 
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_notification_icon)
+            .setSmallIcon(R.drawable.ic_launcher_monochrome)
             .setCustomContentView(notificationLayout)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -128,14 +141,24 @@ object NotificationHelper {
         notificationManager.notify(NOTIFICATION_ID, builder.build())
     }
 
+    fun onCategoryClick(context: Context, category: String) {
+        if (expandedCategories.contains(category)) {
+            expandedCategories.remove(category)
+        } else {
+            expandedCategories.add(category)
+        }
+        renderNotification(context)
+    }
+
     private fun getCategoryClickIntent(context: Context, category: String): PendingIntent {
         val intent = Intent(context, NotificationBroadcastReceiver::class.java).apply {
             action = "com.notif.ai.CATEGORY_CLICK"
             putExtra("category", category)
         }
+        // Use a unique request code based on category hash to ensure distinct PendingIntents
         return PendingIntent.getBroadcast(
             context,
-            category.hashCode(),
+            category.hashCode(), 
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )

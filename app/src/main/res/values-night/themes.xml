@@ -1,0 +1,6 @@
+<resources>
+
+    <style name="Theme.NotifAi" parent="android:Theme.Material.NoActionBar">
+        <item name="android:textColorPrimary">#FFFFFF</item>
+    </style>
+</resources>

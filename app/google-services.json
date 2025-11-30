@@ -12,7 +12,20 @@
           "package_name": "com.notif.ai"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1018721520850-qmbpb2r55009r824iipdadt89mi17cql.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.notif.ai",
+            "certificate_hash": "a8aeaf4799949aa63cf6847c9222dc5d729d76e3"
+          }
+        },
+        {
+          "client_id": "1018721520850-cj2mr7d1ei46aj2omfhi0shnk8g6qujs.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBCpd6iZEPuiH5InHeJbQtQM-eVE-cYi74"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1018721520850-cj2mr7d1ei46aj2omfhi0shnk8g6qujs.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
