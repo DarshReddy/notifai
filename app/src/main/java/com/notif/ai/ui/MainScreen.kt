@@ -21,6 +21,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.notif.ai.ui.inbox.InboxScreen
+import com.notif.ai.ui.insights.InsightsScreen
+import com.notif.ai.ui.insights.InsightsViewModel
 import com.notif.ai.ui.navigation.Screen
 import com.notif.ai.ui.settings.AppCategoriesScreen
 import com.notif.ai.ui.settings.AppCategoriesViewModel
@@ -31,7 +33,7 @@ import com.notif.ai.ui.settings.SettingsScreen
 @Composable
 fun MainScreen(
     notificationListViewModel: NotificationListViewModel,
-    insightsViewModel: com.notif.ai.ui.insights.InsightsViewModel,
+    insightsViewModel: InsightsViewModel,
     batchScheduleViewModel: BatchScheduleViewModel,
     appCategoriesViewModel: AppCategoriesViewModel
 ) {
@@ -74,7 +76,7 @@ fun MainScreen(
             modifier = Modifier.padding(padding)
         ) {
             composable(Screen.Inbox.route) { InboxScreen(viewModel = notificationListViewModel) }
-            composable(Screen.Insights.route) { com.notif.ai.ui.insights.InsightsScreen(viewModel = insightsViewModel) }
+            composable(Screen.Insights.route) { InsightsScreen(viewModel = insightsViewModel) }
             composable(Screen.Settings.route) {
                 SettingsScreen(
                     onNavigateBatchSchedule = { navController.navigate(Screen.BatchSchedule.route) },

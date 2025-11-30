@@ -30,6 +30,7 @@ import com.notif.ai.data.NotificationRepository
 import com.notif.ai.data.PreferencesManager
 import com.notif.ai.ui.MainScreen
 import com.notif.ai.ui.NotificationListViewModel
+import com.notif.ai.ui.insights.InsightsViewModel
 import com.notif.ai.ui.onboarding.OnboardingScreen
 import com.notif.ai.ui.settings.AppCategoriesViewModel
 import com.notif.ai.ui.settings.BatchScheduleViewModel
@@ -43,7 +44,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var preferencesManager: PreferencesManager
     private lateinit var repository: NotificationRepository
     private lateinit var notificationListViewModel: NotificationListViewModel
-    private lateinit var insightsViewModel: com.notif.ai.ui.insights.InsightsViewModel
+    private lateinit var insightsViewModel: InsightsViewModel
     private lateinit var batchScheduleViewModel: BatchScheduleViewModel
     private lateinit var appCategoriesViewModel: AppCategoriesViewModel
     private val requestPostNotifPermission =
@@ -71,7 +72,7 @@ class MainActivity : ComponentActivity() {
         repository = NotificationRepository(database.notificationDao())
         notificationListViewModel = NotificationListViewModel(repository)
         insightsViewModel =
-            com.notif.ai.ui.insights.InsightsViewModel(repository, applicationContext)
+            InsightsViewModel(repository, applicationContext)
         val batchRepo = BatchScheduleRepository(database.batchScheduleDao())
         batchScheduleViewModel = BatchScheduleViewModel(batchRepo)
         val appPrefRepo = AppPreferenceRepository(database.appPreferenceDao())
