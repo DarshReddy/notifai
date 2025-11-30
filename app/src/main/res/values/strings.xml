@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">Notifa</string>
+    <string name="app_name">NotifAi</string>
+    <string name="summary_on_the_way">Summary on the way</string>
 </resources>

@@ -1,5 +1,14 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.Notifa" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.NotifAi" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="NotificationTitle" parent="android:TextAppearance.Material.Notification.Title" />
+
+    <style name="NotificationText" parent="android:TextAppearance.Material.Notification.Line2" />
+
+    <style name="NotificationInfo" parent="android:TextAppearance.Material.Notification.Info" />
+
+    <style name="CategoryTitle" parent="android:TextAppearance.Material.Notification.Title">
+        <item name="android:textStyle">bold</item>
+    </style>
 </resources>
