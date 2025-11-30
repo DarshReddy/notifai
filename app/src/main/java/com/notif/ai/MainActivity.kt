@@ -1,14 +1,18 @@
 package com.notif.ai
 
 import android.Manifest
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -18,7 +22,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.app.NotificationManagerCompat
-import com.notif.ai.ai.GeminiService
+import androidx.lifecycle.lifecycleScope
 import com.notif.ai.data.AppDatabase
 import com.notif.ai.data.AppPreferenceRepository
 import com.notif.ai.data.BatchScheduleRepository
@@ -37,7 +41,6 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
 
     private lateinit var preferencesManager: PreferencesManager
-    private lateinit var geminiService: GeminiService
     private lateinit var repository: NotificationRepository
     private lateinit var notificationListViewModel: NotificationListViewModel
     private lateinit var insightsViewModel: com.notif.ai.ui.insights.InsightsViewModel
@@ -50,7 +53,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(
+                Color.TRANSPARENT
+            )
+        )
         // Ensure channel exists
         NotificationHelper.createNotificationChannel(applicationContext)
         // Request POST_NOTIFICATIONS on Android 13+
@@ -60,7 +67,6 @@ class MainActivity : ComponentActivity() {
 
         // Initialize dependencies
         preferencesManager = PreferencesManager(applicationContext)
-        geminiService = GeminiService.getInstance()
         val database = AppDatabase.getDatabase(applicationContext)
         repository = NotificationRepository(database.notificationDao())
         notificationListViewModel = NotificationListViewModel(repository)
@@ -73,40 +79,44 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             NotifaTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    val scope = rememberCoroutineScope()
-                    var showOnboarding by remember { mutableStateOf<Boolean?>(null) }
+                Scaffold {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(it),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        val scope = rememberCoroutineScope()
+                        var showOnboarding by remember { mutableStateOf<Boolean?>(null) }
 
-                    LaunchedEffect(Unit) {
-                        scope.launch {
-                            val completed = preferencesManager.onboardingCompleted.first()
-                            showOnboarding = !completed
-                        }
-                    }
-
-                    when (showOnboarding) {
-                        true -> {
-                            OnboardingScreen(
-                                onComplete = {
-                                    showOnboarding = false
-                                }
-                            )
+                        LaunchedEffect(Unit) {
+                            scope.launch {
+                                val completed = preferencesManager.onboardingCompleted.first()
+                                showOnboarding = !completed
+                            }
                         }
 
-                        false -> {
-                            MainScreen(
-                                notificationListViewModel = notificationListViewModel,
-                                insightsViewModel = insightsViewModel,
-                                batchScheduleViewModel = batchScheduleViewModel,
-                                appCategoriesViewModel = appCategoriesViewModel
-                            )
-                        }
+                        when (showOnboarding) {
+                            true -> {
+                                OnboardingScreen(
+                                    onComplete = {
+                                        showOnboarding = false
+                                    }
+                                )
+                            }
 
-                        null -> {
-                            // Loading state
+                            false -> {
+                                MainScreen(
+                                    notificationListViewModel = notificationListViewModel,
+                                    insightsViewModel = insightsViewModel,
+                                    batchScheduleViewModel = batchScheduleViewModel,
+                                    appCategoriesViewModel = appCategoriesViewModel
+                                )
+                            }
+
+                            null -> {
+                                // Loading state
+                            }
                         }
                     }
                 }
@@ -117,7 +127,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         val hasPermission = isNotificationListenerEnabled()
-        kotlinx.coroutines.GlobalScope.launch {
+        lifecycleScope.launch {
             preferencesManager.setNotificationPermissionGranted(hasPermission)
         }
         // If notifications exist, make sure summary is shown (InboxViewModel listener will update subsequently)

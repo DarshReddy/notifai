@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1018721520850",
+    "project_id": "notifai-ca627",
+    "storage_bucket": "notifai-ca627.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1018721520850:android:98db56b0b392b94ba5f10b",
+        "android_client_info": {
+          "package_name": "com.notif.ai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBCpd6iZEPuiH5InHeJbQtQM-eVE-cYi74"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

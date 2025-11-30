@@ -7,18 +7,19 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.google.firebase.FirebaseApp
 import com.notif.ai.data.AppDatabase
 import com.notif.ai.data.NotificationRepository
 import com.notif.ai.worker.DailySummaryWorker
 import java.util.concurrent.TimeUnit
 
-class NotifaApplication : Application(), Configuration.Provider {
-
+class NotifAiApplication : Application(), Configuration.Provider {
     val database by lazy { AppDatabase.getDatabase(this) }
     val repository by lazy { NotificationRepository(database.notificationDao()) }
 
     override fun onCreate() {
         super.onCreate()
+        FirebaseApp.initializeApp(this)
         setupDailySummaryWorker()
     }
 

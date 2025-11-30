@@ -41,20 +41,21 @@ class NotifListenerService : NotificationListenerService() {
                 return
             }
 
-            val title = notification.extras.getString("android.title", "").toString()
-            val text = notification.extras.getString("android.text", "").toString()
+            val title = notification.extras.getString("android.title", "")
+            val text = notification.extras.getString("android.text", "")
             val timestamp = sbn.postTime
+
+            if (title.isEmpty() && text.isEmpty()) return
 
             // Simple classification rules
             scope.launch {
-                val geminiService = GeminiService.getInstance()
-                val priorityString = geminiService.categorizePriority(title, text, packageName)
+                val priorityString = GeminiService.categorizePriority(title, text, packageName)
 
                 val priority = when (priorityString) {
                     "My Priority" -> Priority.MY_PRIORITY
                     "Promotional" -> Priority.PROMOTIONAL
                     "Spam" -> Priority.SPAM
-                    else -> Priority.IMPORTANT
+                    else -> return@launch
                 }
 
                 val pref = appPrefRepo.get(packageName)

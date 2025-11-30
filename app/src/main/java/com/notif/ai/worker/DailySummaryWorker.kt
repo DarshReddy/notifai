@@ -4,7 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.notif.ai.NotifaApplication
+import com.notif.ai.NotifAiApplication
 import java.util.Calendar
 
 class DailySummaryWorker(
@@ -13,7 +13,7 @@ class DailySummaryWorker(
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
-        val repository = (applicationContext as NotifaApplication).repository
+        val repository = (applicationContext as NotifAiApplication).repository
         return try {
             val calendar = Calendar.getInstance()
             calendar.add(Calendar.DAY_OF_YEAR, -1)

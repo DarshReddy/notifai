@@ -1,22 +1,15 @@
 package com.notif.ai.ai
 
-import com.google.firebase.FirebaseApp
-import com.google.firebase.vertexai.FirebaseVertexAI
-import com.google.firebase.vertexai.type.generationConfig
+import com.google.firebase.Firebase
+import com.google.firebase.ai.ai
+import com.google.firebase.ai.type.GenerativeBackend
 
+object GeminiService {
 
-class GeminiService {
-
-    private val generativeModel =
-        FirebaseVertexAI.getInstance(FirebaseApp.getInstance()).generativeModel(
-            modelName = "gemini-1.5-flash-latest",
-            generationConfig = generationConfig {
-                temperature = 0.7f
-                topK = 40
-                topP = 0.95f
-                maxOutputTokens = 200
-            }
-        )
+    private val generativeModel by lazy {
+        Firebase.ai(backend = GenerativeBackend.googleAI())
+            .generativeModel(modelName = "gemini-2.5-flash")
+    }
 
     suspend fun summarizeNotification(title: String, text: String, appName: String): String {
         return try {
@@ -60,23 +53,10 @@ class GeminiService {
                 result.contains("My Priority", ignoreCase = true) -> "My Priority"
                 result.contains("Promotional", ignoreCase = true) -> "Promotional"
                 result.contains("Spam", ignoreCase = true) -> "Spam"
-                else -> "Important"
+                else -> "None"
             }
         } catch (e: Exception) {
-            "Important"
-        }
-    }
-
-    companion object {
-        @Volatile
-        private var INSTANCE: GeminiService? = null
-
-        fun getInstance(): GeminiService {
-            return INSTANCE ?: synchronized(this) {
-                val instance = GeminiService()
-                INSTANCE = instance
-                instance
-            }
+            "None"
         }
     }
 }

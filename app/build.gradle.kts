@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp")
+    alias(libs.plugins.googleGmsGoogleServices)
 }
 
 android {
@@ -68,7 +69,8 @@ dependencies {
     // Room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-    implementation(libs.google.firebase.vertexai)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.ai)
     ksp(libs.androidx.room.compiler)
 
     // WorkManager
@@ -89,7 +91,6 @@ dependencies {
 
     // Gemini AI
     implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.vertexai)
 
     // DataStore
     implementation(libs.androidx.datastore.preferences)
@@ -104,11 +105,6 @@ dependencies {
     // System UI Controller
     implementation(libs.accompanist.systemuicontroller)
 
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

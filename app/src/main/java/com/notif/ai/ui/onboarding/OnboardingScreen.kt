@@ -14,11 +14,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
@@ -46,19 +48,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.HorizontalPager
-import com.google.accompanist.pager.HorizontalPagerIndicator
-import com.google.accompanist.pager.rememberPagerState
 import com.notif.ai.data.PreferencesManager
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun OnboardingScreen(
     onComplete: () -> Unit
 ) {
-    val pagerState = rememberPagerState()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val preferencesManager = remember { PreferencesManager(context) }
@@ -112,6 +108,7 @@ fun OnboardingScreen(
             gradient = listOf(Color(0xFFF59E0B), Color(0xFF6366F1))
         )
     )
+    val pagerState = rememberPagerState(pageCount = { pages.size })
 
     Box(
         modifier = Modifier
@@ -123,22 +120,11 @@ fun OnboardingScreen(
         ) {
             // Pager
             HorizontalPager(
-                count = pages.size,
                 state = pagerState,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             ) { page ->
                 OnboardingPageContent(pages[page])
             }
-
-            // Indicators
-            HorizontalPagerIndicator(
-                pagerState = pagerState,
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(16.dp),
-                activeColor = MaterialTheme.colorScheme.primary,
-                inactiveColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-            )
 
             // Navigation buttons
             Row(
@@ -156,7 +142,7 @@ fun OnboardingScreen(
                             }
                         }
                     ) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Back")
                     }
@@ -203,7 +189,7 @@ fun OnboardingScreen(
                         if (pagerState.currentPage == pages.size - 1)
                             Icons.Default.Check
                         else
-                            Icons.Default.ArrowForward,
+                            Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = "Next"
                     )
                 }

@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.Locale.getDefault
 
 data class InsightsData(
     val totalNotifications: Int,
@@ -75,7 +76,9 @@ class InsightsViewModel(
                         .take(5)
                         .map { entry ->
                             val appName =
-                                entry.key.split(".").lastOrNull()?.capitalize() ?: entry.key
+                                entry.key.split(".").lastOrNull()?.replaceFirstChar {
+                                    if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString()
+                                } ?: entry.key
                             AppUsageData(appName, entry.key, entry.value, 0)
                         }
                 }
